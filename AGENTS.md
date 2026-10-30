@@ -8,8 +8,9 @@ Instruções para agentes de IA (Claude Code, Codex, Antigravity etc.) trabalhan
 peso corporal. Produto independente do Planner, só backend, consumido pela API (scripts, a ALICE, apps futuros).
 Pensado para muitos usuários, embora hoje só um use.
 
-> Status: **modelagem do banco concluída** — minimundo, conceitual, lógico e físico em `docs/data-modeling/`, e o
-> catálogo inicial de exercícios em `docs/exercise-catalog.json`. Ainda não há código.
+> Status: **domínio implementado** — modelagem do banco concluída (`docs/data-modeling/`, catálogo inicial em
+> `docs/exercise-catalog.json`) e camada de domínio com testes. Próximos passos: Application, persistência
+> (EF Core, schema `treinos`, carga inicial) e API.
 
 ## Decisões planejadas
 
@@ -44,8 +45,37 @@ Decisões a revisitar (detalhes nos documentos de `docs/data-modeling/`):
 | 11 | Grupos musculares | manter os 11 (`chest`, `back`, `shoulders`, `biceps`, `triceps`, `forearms`, `quadriceps`, `hamstrings`, `glutes`, `calves`, `abs`), sem detalhar as costas (dorsal, trapézio, lombar) | 01, 04 "Seed data" |
 | 12 | Catálogo inicial de exercícios | curadoria própria (~80–120 exercícios comuns), com apelidos em pt-BR e inglês feitos à mão. Fontes consideradas: free-exercise-db (Unlicense, sem obrigações; útil como referência) e wger (CC-BY-SA: copiar dados exige atribuição e compartilhamento pela mesma licença; evitar copiar) | 04 "Seed data" |
 | 13 | Grupos musculares do cardio | exercícios `distance_time` do sistema não têm grupo muscular (exceção na restrição 5), para não inflar as análises por grupo | 01, 02, 03 restrição 5 |
+| 14 | Regras que cruzam entidades, no domínio | exercício visível para o dono do treino e lado só em exercício unilateral ficam no domínio: `Workout.AddExercise` recebe o `Exercise` e confere (previstas antes como "só na API") | `Workout`, `WorkoutSet` |
+| 15 | Ordem de exercícios e séries | vem da posição na lista; o domínio numera `SortOrder` (0, 1, 2…) e renumera ao remover ou reordenar; o cliente nunca envia a ordem | `Workout` |
+| 16 | Zero repetições | só numa série marcada como falhada (o banco aceita ≥ 0; o domínio é mais estrito) | `WorkoutSet` |
 
 Ao tomar uma decisão nova, acrescente-a nesta tabela.
+
+## Estrutura
+
+Só backend, então a solução fica na raiz (sem a pasta `api/` do Planner):
+
+```
+treinos/
+├── Treinos.slnx, global.json, Directory.*.props, .editorconfig   # mesma configuração do Planner
+├── docs/data-modeling/       # modelagem do banco, etapa por etapa
+├── docs/exercise-catalog.json  # catálogo inicial (fonte da carga inicial)
+├── src/Treinos.Domain/       # entidades e regras: Users, Exercises, Workouts, BodyWeights
+└── tests/Treinos.Domain.Tests/
+```
+
+## Comandos (na raiz)
+
+- `dotnet build` — compila; qualquer aviso (incluindo formatação e nulos) quebra o build.
+- `dotnet test` — roda os testes (xUnit v3 sobre a Microsoft.Testing.Platform).
+- `dotnet format` — corrige a formatação; `dotnet format --verify-no-changes` só verifica.
+- Versões de pacotes NuGet ficam só em `Directory.Packages.props`.
+
+## Ambiente de desenvolvimento
+
+- Windows 10 com o .NET 10 SDK (winget `Microsoft.DotNet.SDK.10`). Ainda sem Docker: o Postgres local e os
+  testes de integração (Testcontainers) exigem decidir entre Docker Desktop e Postgres no WSL quando a
+  persistência começar.
 
 ## Convenções
 

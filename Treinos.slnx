@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Treinos.Domain/Treinos.Domain.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Treinos.Domain.Tests/Treinos.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
