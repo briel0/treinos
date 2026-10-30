@@ -34,6 +34,9 @@ public sealed record NewSet(
 public sealed class WorkoutSet {
     public const decimal MaxLoadKg = 9999.99m;
 
+    /// <summary>Usado pelo EF Core para ler séries do banco.</summary>
+    private WorkoutSet() { }
+
     private WorkoutSet(NewSet data, int sortOrder) {
         Id = data.Id;
         SortOrder = sortOrder;

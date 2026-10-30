@@ -9,6 +9,10 @@ namespace Treinos.Domain.Workouts;
 public sealed class WorkoutExercise {
     private readonly List<WorkoutSet> _sets;
 
+    /// <summary>Usado pelo EF Core, que preenche as séries depois.</summary>
+    private WorkoutExercise(Guid id, Guid exerciseId, MeasurementType measurementType, int sortOrder)
+        : this(id, exerciseId, measurementType, sortOrder, []) { }
+
     private WorkoutExercise(
         Guid id, Guid exerciseId, MeasurementType measurementType, int sortOrder, List<WorkoutSet> sets) {
         Id = id;

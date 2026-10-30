@@ -1,0 +1,29 @@
+[Unit]
+Description=Treinos - API
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+User=treinos
+Group=treinos
+WorkingDirectory=/opt/treinos/current
+ExecStart=/opt/treinos/current/Treinos.Api
+# Development: a API só tem o esquema de usuário dev; por isso ela só escuta em 127.0.0.1
+Environment=ASPNETCORE_ENVIRONMENT=Development
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5265
+# Socket local + autenticação peer do Postgres: sem senha. Schema treinos no mesmo banco do Planner.
+Environment="ConnectionStrings__Treinos=Host=/var/run/postgresql;Database=planner;Username=treinos"
+Environment=DOTNET_gcServer=0
+Environment=DOTNET_GCConserveMemory=5
+Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+MemoryMax=250M
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/treinos
+
+[Install]
+WantedBy=multi-user.target

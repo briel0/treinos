@@ -8,9 +8,16 @@ Instruções para agentes de IA (Claude Code, Codex, Antigravity etc.) trabalhan
 peso corporal. Produto independente do Planner, só backend, consumido pela API (scripts, a ALICE, apps futuros).
 Pensado para muitos usuários, embora hoje só um use.
 
-> Status: **domínio implementado** — modelagem do banco concluída (`docs/data-modeling/`, catálogo inicial em
-> `docs/exercise-catalog.json`) e camada de domínio com testes. Próximos passos: Application, persistência
-> (EF Core, schema `treinos`, carga inicial) e API.
+> Status: **versão mínima no ar na VPS** — registra treinos (exercícios e séries) e peso corporal, lista o
+> catálogo e acha exercícios por nome ou apelido. Ficou de fora, de propósito: concorrência otimista
+> (If-Match), exercícios e apelidos criados pelo usuário, reordenação, análises, login com Google e testes de
+> integração (Testcontainers exige Docker). Próximo passo natural: ferramentas na ALICE para registrar treinos
+> pelo Telegram.
+>
+> **Banco: o Postgres da VPS, sem banco local.** Em desenvolvimento, a API roda no PC e acessa a VPS por túnel
+> SSH, no banco separado `treinos_dev` (nunca nos dados reais). Em produção, roda na VPS como serviço systemd,
+> como o Planner, no schema `treinos` do banco `planner`, com o usuário `treinos` (que não lê as tabelas do
+> Planner).
 
 ## Decisões planejadas
 
@@ -48,6 +55,10 @@ Decisões a revisitar (detalhes nos documentos de `docs/data-modeling/`):
 | 14 | Regras que cruzam entidades, no domínio | exercício visível para o dono do treino e lado só em exercício unilateral ficam no domínio: `Workout.AddExercise` recebe o `Exercise` e confere (previstas antes como "só na API") | `Workout`, `WorkoutSet` |
 | 15 | Ordem de exercícios e séries | vem da posição na lista; o domínio numera `SortOrder` (0, 1, 2…) e renumera ao remover ou reordenar; o cliente nunca envia a ordem | `Workout` |
 | 16 | Zero repetições | só numa série marcada como falhada (o banco aceita ≥ 0; o domínio é mais estrito) | `WorkoutSet` |
+| 17 | Nome do usuário do banco | `treinos` (não `treinos_app`): igual ao usuário de sistema do serviço, para entrar pelo socket com autenticação peer, sem senha, como o Planner | 04, "Schema and database role" |
+| 18 | FKs compostas no EF Core | o EF Core declara as FKs `(id, measurement_type)` como chaves alternativas (o tipo nunca muda); as FKs simples extras do modelo físico não existem. Nas séries, a cópia do tipo é uma propriedade oculta preenchida pelo EF | 04, "Foreign keys" |
+| 19 | Restrições de ordem | `DEFERRABLE INITIALLY DEFERRED` (conferidas só no commit), porque o EF Core não ordena os UPDATEs ao renumerar | 04, "Uniqueness" |
+| 20 | Peso corporal na API | identificado pelo dia: `PUT /api/body-weights/{data}` cria ou substitui, sem id do cliente | `BodyWeightUseCases` |
 
 Ao tomar uma decisão nova, acrescente-a nesta tabela.
 
@@ -58,11 +69,25 @@ Só backend, então a solução fica na raiz (sem a pasta `api/` do Planner):
 ```
 treinos/
 ├── Treinos.slnx, global.json, Directory.*.props, .editorconfig   # mesma configuração do Planner
-├── docs/data-modeling/       # modelagem do banco, etapa por etapa
-├── docs/exercise-catalog.json  # catálogo inicial (fonte da carga inicial)
-├── src/Treinos.Domain/       # entidades e regras: Users, Exercises, Workouts, BodyWeights
+├── docs/data-modeling/          # modelagem do banco, etapa por etapa
+├── docs/exercise-catalog.json   # catálogo inicial (fonte da migration SeedExerciseCatalog)
+├── deploy/treinos-api.service   # unit do systemd na VPS
+├── src/Treinos.Domain/          # entidades e regras: Users, Exercises, Workouts, BodyWeights
+├── src/Treinos.Application/     # casos de uso, respostas e interfaces de repositório/consulta
+├── src/Treinos.Infrastructure/  # EF Core + Npgsql: mapeamento, migrations, repositórios, consultas
+├── src/Treinos.Api/             # controllers REST, autenticação de desenvolvimento, Problem Details
 └── tests/Treinos.Domain.Tests/
 ```
+
+## API
+
+Tudo sob `/api`, JSON em camelCase, listas de valores em snake_case (`weight_reps`), erros em Problem Details
+com `code`. Ids de criação vêm do cliente (UUID v7): repetir o pedido não duplica. OpenAPI em `/openapi/v1.json`.
+
+- `GET /api/exercises`, `GET /api/exercises/{id}`, `GET /api/exercises/resolve?term=paralela` (404 se nada bater).
+- `GET /api/workouts?since=&until=`, `GET|PATCH|DELETE /api/workouts/{id}`, `POST /api/workouts` (com
+  exercícios e séries, ou vazio), `POST /api/workouts/{id}/exercises`, `DELETE /api/workouts/{id}/exercises/{id}`.
+- `GET /api/body-weights?since=&until=`, `PUT|DELETE /api/body-weights/{2026-10-30}`.
 
 ## Comandos (na raiz)
 
@@ -70,12 +95,30 @@ treinos/
 - `dotnet test` — roda os testes (xUnit v3 sobre a Microsoft.Testing.Platform).
 - `dotnet format` — corrige a formatação; `dotnet format --verify-no-changes` só verifica.
 - Versões de pacotes NuGet ficam só em `Directory.Packages.props`.
+- Migrations (`dotnet tool restore` uma vez):
+  - criar: `dotnet ef migrations add <Nome> --project src/Treinos.Infrastructure --startup-project src/Treinos.Infrastructure --output-dir Persistence/Migrations`;
+  - aplicar no `treinos_dev` (com o túnel aberto): `dotnet ef database update --project src/Treinos.Infrastructure --startup-project src/Treinos.Infrastructure --connection "<string dos User Secrets>;Search Path=treinos"`. Sem o `Search Path`, a collation não é achada.
+- Rodar a API: `ASPNETCORE_ENVIRONMENT=Development dotnet run --project src/Treinos.Api` (porta 5265). Fora de
+  Development ela se recusa a subir: só existe o usuário dev.
 
 ## Ambiente de desenvolvimento
 
-- Windows 10 com o .NET 10 SDK (winget `Microsoft.DotNet.SDK.10`). Ainda sem Docker: o Postgres local e os
-  testes de integração (Testcontainers) exigem decidir entre Docker Desktop e Postgres no WSL quando a
-  persistência começar.
+- Windows 10 com o .NET 10 SDK (winget `Microsoft.DotNet.SDK.10`). Sem Docker e sem Postgres local.
+- Banco: `treinos_dev` na VPS. Túnel: `ssh -N -L 15432:127.0.0.1:5432 alice-vm`. A string de conexão fica nos User
+  Secrets (`ConnectionStrings:Treinos`, com `Port=15432`, usuário e senha `treinos_dev`), nunca no Git.
+
+## Deploy na VPS
+
+Mesmo molde do Planner: executável publicado (self-contained, linux-x64) em `/opt/treinos/releases/<versão>`,
+`/opt/treinos/current` aponta para a versão ativa, usuário de sistema `treinos`, serviço `treinos-api` (ver
+`deploy/treinos-api.service`) escutando só em `127.0.0.1:5265`, em Development.
+
+1. `dotnet publish src/Treinos.Api -c Release -r linux-x64 --self-contained -o <pasta>` e copiar para a VPS.
+2. Migrations: `dotnet ef migrations script --idempotent ...` com `SET search_path = treinos;` na primeira linha,
+   aplicado com `sudo -u treinos psql -v ON_ERROR_STOP=1 -d planner -f script.sql`.
+3. Trocar o link `current` e `sudo systemctl restart treinos-api`.
+
+Do PC, a API de produção é acessível por túnel: `ssh -N -L 8781:127.0.0.1:5265 alice-vm` → `http://localhost:8781/api`.
 
 ## Convenções
 

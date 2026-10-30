@@ -8,9 +8,13 @@ exact types, constraints and indexes. Targets **PostgreSQL 18**, the same server
 
 - Every object lives in the **`treinos` schema**, including the EF Core migrations history
   (`__EFMigrationsHistory` in `treinos`), so this product never collides with another one sharing the server.
-- The API connects with its **own role** (`treinos_app`), which has privileges on `treinos` only and cannot
-  read any other schema. On another installation the product may have a database of its own without
-  changing a line: the schema name is the only assumption.
+- The API connects with its **own role** (`treinos`, the owner of the schema), which has privileges on
+  `treinos` only and cannot read any other schema. On the VPS the role has the same name as the system user
+  that runs the service, so it logs in through the local socket with peer authentication, without a password.
+  On another installation the product may have a database of its own without changing a line: the schema
+  name is the only assumption.
+- **The connection's `search_path` is `treinos`** (set by the API and required when running migrations), so
+  unqualified names such as the collation resolve to this schema.
 
 ## Collation for search terms
 
@@ -136,9 +140,9 @@ CREATE COLLATION treinos.ignore_case_accents (
   exercise on its own fails.
 - **Deleting a user** deletes everything they own: exercises, aliases, workouts (with entries and sets) and body
   weights.
-- **Implementation note:** the plain `exercise_id` and `workout_exercise_id` foreign keys are redundant with
-  the composite ones, but EF Core needs them to order inserts and to navigate. The composite keys are created
-  with hand-written SQL in the migration, as in the Planner.
+- **Implementation note:** unlike the Planner, EF Core declares the composite keys itself (as alternate keys),
+  because the measurement type never changes. So the plain `exercise_id` and `workout_exercise_id` foreign keys
+  listed above are not created: the composite ones cover them.
 
 ### Measurement type copies
 
@@ -170,9 +174,10 @@ to `workout_sets`, and each copy is guarded by a composite foreign key:
 | `workout_sets (workout_exercise_id, sort_order)` `DEFERRABLE` | order unique within an entry |
 | `body_weights (user_id, measured_on)` | one weight per user per day |
 
-- **Order constraints are `DEFERRABLE INITIALLY IMMEDIATE`:** swapping the 2nd and 3rd set would hit a duplicate
-  halfway through. The reorder transaction runs `SET CONSTRAINTS ... DEFERRED`, so uniqueness is checked only at
-  commit. Written by hand in the migration: EF Core cannot declare deferrable constraints.
+- **Order constraints are `DEFERRABLE INITIALLY DEFERRED`:** removing an exercise and renumbering the next ones
+  (or swapping two sets) passes through duplicates halfway, and EF Core does not order its updates to avoid
+  them. Uniqueness is checked only at commit. Written by hand in the migration: EF Core cannot declare
+  deferrable constraints.
 - **Not in the database, checked by the API** (logical "Search terms"): a user's exercise cannot take the name of a
   system exercise, and a new name or alias cannot clash with another term of the same scope in the other table.
   Searches stay deterministic regardless, by the fixed precedence.

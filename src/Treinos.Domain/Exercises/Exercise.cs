@@ -14,6 +14,10 @@ namespace Treinos.Domain.Exercises;
 public sealed class Exercise {
     private List<ExerciseMuscle> _muscles;
 
+    /// <summary>Usado pelo EF Core, que preenche os grupos musculares depois.</summary>
+    private Exercise(Guid id, Guid? userId, string name, MeasurementType measurementType, bool isUnilateral)
+        : this(id, userId, name, measurementType, isUnilateral, []) { }
+
     private Exercise(
         Guid id, Guid? userId, string name, MeasurementType measurementType, bool isUnilateral,
         List<ExerciseMuscle> muscles) {
