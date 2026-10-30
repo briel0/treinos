@@ -11,8 +11,8 @@ Pensado para muitos usuários, embora hoje só um use.
 > Status: **versão mínima no ar na VPS** — registra treinos (exercícios e séries) e peso corporal, lista o
 > catálogo e acha exercícios por nome ou apelido. Ficou de fora, de propósito: concorrência otimista
 > (If-Match), exercícios e apelidos criados pelo usuário, reordenação, análises, login com Google e testes de
-> integração (Testcontainers exige Docker). Próximo passo natural: ferramentas na ALICE para registrar treinos
-> pelo Telegram.
+> integração (Testcontainers exige Docker). A ALICE já registra e corrige treinos e grava o peso pelo Telegram
+> (`src/treinos.py` no repositório dela).
 >
 > **Banco: o Postgres da VPS, sem banco local.** Em desenvolvimento, a API roda no PC e acessa a VPS por túnel
 > SSH, no banco separado `treinos_dev` (nunca nos dados reais). Em produção, roda na VPS como serviço systemd,
@@ -119,6 +119,15 @@ Mesmo molde do Planner: executável publicado (self-contained, linux-x64) em `/o
 3. Trocar o link `current` e `sudo systemctl restart treinos-api`.
 
 Do PC, a API de produção é acessível por túnel: `ssh -N -L 8781:127.0.0.1:5265 alice-vm` → `http://localhost:8781/api`.
+
+## Backlog
+
+1. Dashboard (ou algo do tipo) com os dados dos treinos: progressão de carga por exercício, volume por grupo
+   muscular, frequência, peso corporal ao longo do tempo. Nada decidido: página própria, consultas na API,
+   ferramenta pronta lendo o banco etc. As análises ficaram fora da versão mínima de propósito.
+2. Leitura pela ALICE (o que foi feito num dia, histórico de um exercício, peso corporal): decisão adiada para
+   depois do teste em produção; detalhes no backlog da ALICE.
+3. Exercícios por tempo no catálogo (prancha etc.): hoje não há nenhum.
 
 ## Convenções
 
