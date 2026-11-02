@@ -80,6 +80,12 @@
   { "name": "Rosca inclinada com halteres", "measurement_type": "weight_reps", "is_unilateral": false,
     "muscles": { "primary": ["biceps"], "secondary": [] },
     "aliases": ["rosca inclinada", "incline dumbbell curl"] },
+  { "name": "Rosca direta com halteres", "measurement_type": "weight_reps", "is_unilateral": false,
+    "muscles": { "primary": ["biceps"], "secondary": ["forearms"] },
+    "aliases": ["rosca com halteres", "rosca direta com halter", "rosca com halter", "dumbbell curl"] },
+  { "name": "Rosca Scott na máquina", "measurement_type": "weight_reps", "is_unilateral": false,
+    "muscles": { "primary": ["biceps"], "secondary": ["forearms"] },
+    "aliases": ["rosca scott", "scott", "rosca scott máquina", "machine preacher curl", "preacher curl"] },
 
   { "name": "Mergulho nas paralelas", "measurement_type": "bodyweight", "is_unilateral": false,
     "muscles": { "primary": ["chest", "triceps"], "secondary": ["shoulders"] },
