@@ -22,6 +22,9 @@ public sealed record WorkoutExerciseRequest(Guid Id, Guid ExerciseId, IReadOnlyL
     public NewWorkoutExercise ToNew() => new(Id, ExerciseId, [.. Sets.Select(set => set.ToNew())]);
 }
 
+/// <param name="Sets">As séries novas, na ordem em que foram feitas; pelo menos uma.</param>
+public sealed record AddSetsRequest(IReadOnlyList<WorkoutSetRequest> Sets);
+
 /// <summary>
 /// Uma série. Quais medidas preencher depende do tipo de medição do exercício: <c>weight_reps</c> → reps e
 /// loadKg; <c>bodyweight</c> → reps, e loadKg (carga adicional) ou assistanceKg; <c>time</c> → durationSec;

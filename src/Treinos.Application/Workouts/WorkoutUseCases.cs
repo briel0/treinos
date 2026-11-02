@@ -80,6 +80,24 @@ public sealed class WorkoutUseCases(
         return await GetAsync(workoutId, ct);
     }
 
+    /// <summary>
+    /// Acrescenta séries a um exercício que já está no treino. Repetir o pedido com os mesmos ids não duplica as
+    /// séries; um pedido que repete só parte dos ids é recusado.
+    /// </summary>
+    public async Task<WorkoutResponse> AddSetsAsync(
+        Guid workoutId, Guid workoutExerciseId, IReadOnlyList<NewSet> sets, CancellationToken ct) {
+        ArgumentNullException.ThrowIfNull(sets);
+        var workout = await FindOwnAsync(workoutId, ct);
+        var entry = workout.Exercises.SingleOrDefault(existing => existing.Id == workoutExerciseId)
+            ?? throw UseCaseException.NotFound("Workout exercise");
+        if(sets.Count > 0 && sets.All(set => entry.Sets.Any(existing => existing.Id == set.Id))) {
+            return await GetAsync(workoutId, ct);
+        }
+        workout.AddSets(workoutExerciseId, await FindExerciseAsync(entry.ExerciseId, ct), sets);
+        await unitOfWork.SaveChangesAsync(ct);
+        return await GetAsync(workoutId, ct);
+    }
+
     public async Task<WorkoutResponse> RemoveExerciseAsync(Guid workoutId, Guid workoutExerciseId, CancellationToken ct) {
         var workout = await FindOwnAsync(workoutId, ct);
         if(workout.Exercises.All(entry => entry.Id != workoutExerciseId)) {

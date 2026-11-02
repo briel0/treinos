@@ -64,6 +64,12 @@ public sealed class Workout {
         return entry;
     }
 
+    /// <summary>Acrescenta séries, depois das que já existem, a um exercício que já está no treino.</summary>
+    public void AddSets(Guid workoutExerciseId, Exercise exercise, IReadOnlyList<NewSet> sets) {
+        RequireVisible(exercise);
+        _exercises[IndexOf(workoutExerciseId)].AddSets(exercise, sets);
+    }
+
     public void RemoveExercise(Guid workoutExerciseId) {
         _exercises.RemoveAt(IndexOf(workoutExerciseId));
         Renumber();

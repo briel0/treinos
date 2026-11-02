@@ -35,14 +35,29 @@ public sealed class WorkoutExercise {
 
     /// <summary>Um exercício no treino tem pelo menos uma série; a ordem delas é a da lista.</summary>
     internal static WorkoutExercise Create(Guid id, Exercise exercise, IReadOnlyList<NewSet> sets, int sortOrder) {
+        var created = CreateSets(sets, firstSortOrder: 0, exercise, existingIds: []);
+        return new(EntityId.Require(id), exercise.Id, exercise.MeasurementType, sortOrder, created);
+    }
+
+    /// <summary>Acrescenta séries depois das que já existem; <paramref name="exercise"/> é o desta entrada.</summary>
+    internal void AddSets(Exercise exercise, IReadOnlyList<NewSet> sets) {
+        ArgumentNullException.ThrowIfNull(exercise);
+        if(exercise.Id != ExerciseId) {
+            throw new ArgumentException("The exercise must be the one this entry refers to.", nameof(exercise));
+        }
+        _sets.AddRange(CreateSets(sets, _sets.Count, exercise, _sets.Select(set => set.Id)));
+    }
+
+    private static List<WorkoutSet> CreateSets(
+        IReadOnlyList<NewSet> sets, int firstSortOrder, Exercise exercise, IEnumerable<Guid> existingIds) {
         ArgumentNullException.ThrowIfNull(sets);
         if(sets.Count == 0) {
             throw new DomainException("workout.exercise-without-sets", "An exercise in a workout needs at least one set.");
         }
-        if(sets.DistinctBy(set => set.Id).Count() != sets.Count) {
+        var ids = sets.Select(set => set.Id).Concat(existingIds).ToList();
+        if(ids.Distinct().Count() != ids.Count) {
             throw new DomainException("workout.duplicate-set-id", "Each set needs its own id.");
         }
-        var created = sets.Select((set, index) => WorkoutSet.Create(set, index, exercise)).ToList();
-        return new(EntityId.Require(id), exercise.Id, exercise.MeasurementType, sortOrder, created);
+        return [.. sets.Select((set, index) => WorkoutSet.Create(set, firstSortOrder + index, exercise))];
     }
 }

@@ -62,6 +62,17 @@ public sealed class WorkoutsController(WorkoutUseCases workouts) : ControllerBas
     public Task<WorkoutResponse> AddExercise(Guid id, WorkoutExerciseRequest request, CancellationToken ct) =>
         workouts.AddExerciseAsync(id, request.ToNew(), ct);
 
+    /// <summary>
+    /// Acrescenta séries, depois das que já existem, a um exercício do treino. Idempotente pelos ids das séries.
+    /// </summary>
+    [HttpPost("{id:guid}/exercises/{workoutExerciseId:guid}/sets", Name = "AddWorkoutSets")]
+    [ProducesResponseType<WorkoutResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public Task<WorkoutResponse> AddSets(Guid id, Guid workoutExerciseId, AddSetsRequest request, CancellationToken ct) =>
+        workouts.AddSetsAsync(id, workoutExerciseId, [.. request.Sets.Select(set => set.ToNew())], ct);
+
     /// <summary>Tira um exercício (com as séries) do treino; os seguintes sobem uma posição.</summary>
     [HttpDelete("{id:guid}/exercises/{workoutExerciseId:guid}", Name = "RemoveWorkoutExercise")]
     [ProducesResponseType<WorkoutResponse>(StatusCodes.Status200OK)]

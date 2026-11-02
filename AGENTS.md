@@ -59,6 +59,7 @@ Decisões a revisitar (detalhes nos documentos de `docs/data-modeling/`):
 | 18 | FKs compostas no EF Core | o EF Core declara as FKs `(id, measurement_type)` como chaves alternativas (o tipo nunca muda); as FKs simples extras do modelo físico não existem. Nas séries, a cópia do tipo é uma propriedade oculta preenchida pelo EF | 04, "Foreign keys" |
 | 19 | Restrições de ordem | `DEFERRABLE INITIALLY DEFERRED` (conferidas só no commit), porque o EF Core não ordena os UPDATEs ao renumerar | 04, "Uniqueness" |
 | 20 | Peso corporal na API | identificado pelo dia: `PUT /api/body-weights/{data}` cria ou substitui, sem id do cliente | `BodyWeightUseCases` |
+| 21 | Mais séries de um exercício já registrado | endpoint próprio que acrescenta à entrada existente. O domínio continua aceitando o mesmo exercício em entradas separadas (ex.: voltar a ele depois de outro); quem decide juntar é o cliente | `Workout.AddSets` |
 
 Ao tomar uma decisão nova, acrescente-a nesta tabela.
 
@@ -86,7 +87,8 @@ com `code`. Ids de criação vêm do cliente (UUID v7): repetir o pedido não du
 
 - `GET /api/exercises`, `GET /api/exercises/{id}`, `GET /api/exercises/resolve?term=paralela` (404 se nada bater).
 - `GET /api/workouts?since=&until=`, `GET|PATCH|DELETE /api/workouts/{id}`, `POST /api/workouts` (com
-  exercícios e séries, ou vazio), `POST /api/workouts/{id}/exercises`, `DELETE /api/workouts/{id}/exercises/{id}`.
+  exercícios e séries, ou vazio), `POST /api/workouts/{id}/exercises`, `DELETE /api/workouts/{id}/exercises/{id}`,
+  `POST /api/workouts/{id}/exercises/{id}/sets` (acrescenta séries a um exercício já no treino).
 - `GET /api/body-weights?since=&until=`, `PUT|DELETE /api/body-weights/{2026-10-30}`.
 
 ## Comandos (na raiz)

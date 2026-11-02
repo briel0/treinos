@@ -122,6 +122,69 @@ public class WorkoutTests {
     }
 
     [Fact]
+    public void AddSets_appends_after_the_existing_sets_keeping_the_entry() {
+        var workout = Create();
+        var entry = Guid.CreateVersion7();
+        workout.AddExercise(entry, Bench, [BenchSet(), BenchSet()]);
+
+        workout.AddSets(entry, Bench, [BenchSet(reps: 6, load: 65)]);
+
+        var only = Assert.Single(workout.Exercises);
+        Assert.Equal([0, 1, 2], only.Sets.Select(set => set.SortOrder));
+        Assert.Equal(65, only.Sets[2].LoadKg);
+    }
+
+    [Fact]
+    public void AddSets_needs_at_least_one_set() {
+        var workout = Create();
+        var entry = Guid.CreateVersion7();
+        workout.AddExercise(entry, Bench, [BenchSet()]);
+
+        var error = Assert.Throws<DomainException>(() => workout.AddSets(entry, Bench, []));
+
+        Assert.Equal("workout.exercise-without-sets", error.Code);
+    }
+
+    [Fact]
+    public void AddSets_rejects_an_id_already_used_in_the_entry() {
+        var workout = Create();
+        var entry = Guid.CreateVersion7();
+        var set = BenchSet();
+        workout.AddExercise(entry, Bench, [set]);
+
+        var error = Assert.Throws<DomainException>(() => workout.AddSets(entry, Bench, [set, BenchSet()]));
+
+        Assert.Equal("workout.duplicate-set-id", error.Code);
+    }
+
+    [Fact]
+    public void AddSets_validates_the_measurements_of_the_exercise() {
+        var workout = Create();
+        var entry = Guid.CreateVersion7();
+        workout.AddExercise(entry, Bench, [BenchSet()]);
+
+        var error = Assert.Throws<DomainException>(() => workout.AddSets(entry, Bench, [RunSet()]));
+
+        Assert.Equal("set.invalid-measurements", error.Code);
+    }
+
+    [Fact]
+    public void AddSets_rejects_an_unknown_entry() {
+        var error = Assert.Throws<DomainException>(() => Create().AddSets(Guid.CreateVersion7(), Bench, [BenchSet()]));
+
+        Assert.Equal("workout.exercise-not-found", error.Code);
+    }
+
+    [Fact]
+    public void AddSets_needs_the_exercise_of_the_entry() {
+        var workout = Create();
+        var entry = Guid.CreateVersion7();
+        workout.AddExercise(entry, Bench, [BenchSet()]);
+
+        Assert.Throws<ArgumentException>(() => workout.AddSets(entry, Run, [RunSet()]));
+    }
+
+    [Fact]
     public void ReplaceExercise_keeps_the_position_and_swaps_exercise_and_sets() {
         var workout = Create();
         var first = Guid.CreateVersion7();
