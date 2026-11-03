@@ -61,6 +61,7 @@ Decisões a revisitar (detalhes nos documentos de `docs/data-modeling/`):
 | 20 | Peso corporal na API | identificado pelo dia: `PUT /api/body-weights/{data}` cria ou substitui, sem id do cliente | `BodyWeightUseCases` |
 | 21 | Mais séries de um exercício já registrado | endpoint próprio que acrescenta à entrada existente. O domínio continua aceitando o mesmo exercício em entradas separadas (ex.: voltar a ele depois de outro); quem decide juntar é o cliente | `Workout.AddSets` |
 | 22 | O que `load_kg` significa | barra: soma das anilhas dos dois lados, sem o peso da barra ("10 de cada lado" = 20); halteres: o peso de cada halter; máquina: o valor selecionado. Simples de registrar, mas o número não é a carga real e não compara exercícios de equipamentos diferentes. Alternativa descartada: peso total com a barra | `load_kg` |
+| 23 | Histórico de outros apps | importado como treinos sem exercícios, só com início e nota (`Importado do GymRats: <título>`); dias que já têm treino ficam de fora. O Treinos é a fonte única de "em que dias treinei". Alternativa descartada: guardar só no Dojo (sem backup e com o histórico dividido) | script `collector/gymrats_to_treinos.py` no repositório `briel0/dojo` |
 
 Ao tomar uma decisão nova, acrescente-a nesta tabela.
 
