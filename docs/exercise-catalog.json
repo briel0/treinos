@@ -86,6 +86,12 @@
   { "name": "Rosca Scott na máquina", "measurement_type": "weight_reps", "is_unilateral": false,
     "muscles": { "primary": ["biceps"], "secondary": ["forearms"] },
     "aliases": ["rosca scott", "scott", "rosca scott máquina", "machine preacher curl", "preacher curl"] },
+  { "name": "Rosca alternada com halteres", "measurement_type": "weight_reps", "is_unilateral": false,
+    "muscles": { "primary": ["biceps"], "secondary": ["forearms"] },
+    "aliases": ["rosca alternada", "rosca alternada com halter", "alternating dumbbell curl"] },
+  { "name": "Rosca concentrada na máquina", "measurement_type": "weight_reps", "is_unilateral": true,
+    "muscles": { "primary": ["biceps"], "secondary": [] },
+    "aliases": ["rosca concentrada", "rosca concentrada máquina", "machine concentration curl", "concentration curl"] },
 
   { "name": "Mergulho nas paralelas", "measurement_type": "bodyweight", "is_unilateral": false,
     "muscles": { "primary": ["chest", "triceps"], "secondary": ["shoulders"] },
