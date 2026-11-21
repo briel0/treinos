@@ -142,6 +142,9 @@
   { "name": "Panturrilha unilateral", "measurement_type": "bodyweight", "is_unilateral": true,
     "muscles": { "primary": ["calves"], "secondary": [] },
     "aliases": ["single-leg calf raise"] },
+  { "name": "Panturrilha no leg press", "measurement_type": "weight_reps", "is_unilateral": false,
+    "muscles": { "primary": ["calves"], "secondary": [] },
+    "aliases": ["panturrilha no leg", "gêmeos no leg press", "leg press calf raise"] },
 
   { "name": "Abdominal no cabo", "measurement_type": "weight_reps", "is_unilateral": false,
     "muscles": { "primary": ["abs"], "secondary": [] },
