@@ -72,7 +72,8 @@
     "aliases": ["facepull", "puxada para o rosto"] },
   { "name": "Voador inverso", "measurement_type": "weight_reps", "is_unilateral": false,
     "muscles": { "primary": ["shoulders"], "secondary": ["back"] },
-    "aliases": ["peck deck inverso", "crucifixo inverso na máquina", "reverse pec deck", "reverse fly machine"] },
+    "aliases": ["peck deck inverso", "peck deck invertido", "voador invertido", "crucifixo invertido",
+      "crucifixo inverso na máquina", "reverse pec deck", "reverse fly machine"] },
 
   { "name": "Rosca direta com barra", "measurement_type": "weight_reps", "is_unilateral": false,
     "muscles": { "primary": ["biceps"], "secondary": ["forearms"] },
