@@ -132,6 +132,7 @@ Do PC, a API de produção é acessível por túnel: `ssh -N -L 8781:127.0.0.1:5
 2. Leitura pela ALICE (o que foi feito num dia, histórico de um exercício, peso corporal): decisão adiada para
    depois do teste em produção; detalhes no backlog da ALICE.
 3. Exercícios por tempo no catálogo (prancha etc.): hoje não há nenhum.
+4. Rota para criar exercício do usuário (`POST /api/exercises`, com `user_id` preenchido; o catálogo do sistema tem `user_id` nulo): nome, tipo de medição, unilateral, músculos e apelidos. Hoje todo exercício que falta vira uma migration de catálogo (3 vezes entre 11/11 e 21/11/2026), porque a ALICE não tem como criar. Par do item 23 do backlog da ALICE.
 
 ## Convenções
 
